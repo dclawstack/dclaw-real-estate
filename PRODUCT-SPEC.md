@@ -1,51 +1,59 @@
-# PRODUCT-SPEC: CRM
+# PRODUCT-SPEC: Real Estate
 
 ## Overview
 
-**App Name:** CRM
-**Domain:** Customer Relationship Management
-**Target User:** Sales teams, account managers
+**App Name:** Real Estate
+**Domain:** Property listings, tenant management, lease tracking
+**Target User:** Real estate agents, property managers, landlords
 
 ## Core Entities
 
-### Customer
+### Property
 ```
-Customer
+Property
 ├── id: UUID (PK)
-├── name: str (required)
+├── title: str (required)
+├── address: str (required)
+├── city: str (required)
+├── state: str (required)
+├── zip_code: str (required)
+├── price: float (required)
+├── property_type: enum ["house", "apartment", "condo", "commercial", "land"] (required)
+├── bedrooms: int (optional)
+├── bathrooms: float (optional)
+├── square_feet: int (optional)
+├── status: enum ["available", "rented", "sold", "pending"] (default: "available")
+├── description: str (optional)
+├── created_at: datetime
+└── updated_at: datetime
+```
+
+### Tenant
+```
+Tenant
+├── id: UUID (PK)
+├── first_name: str (required)
+├── last_name: str (required)
 ├── email: str (unique, required)
 ├── phone: str (optional)
-├── company: str (optional)
-├── status: enum ["lead", "active", "churned"] (default: "lead")
-├── notes: str (optional)
+├── property_id: UUID (FK → Property, ondelete=SET NULL, optional)
+├── lease_start: date (optional)
+├── lease_end: date (optional)
+├── rent_amount: float (optional)
 ├── created_at: datetime
 └── updated_at: datetime
 ```
 
-### Deal
+### MaintenanceRequest
 ```
-Deal
+MaintenanceRequest
 ├── id: UUID (PK)
-├── customer_id: UUID (FK → Customer, ondelete=CASCADE)
+├── property_id: UUID (FK → Property, ondelete=CASCADE)
+├── tenant_id: UUID (FK → Tenant, ondelete=SET NULL, optional)
 ├── title: str (required)
-├── value: float (required, default 0)
-├── stage: enum ["prospecting", "qualification", "proposal", "negotiation", "closed_won", "closed_lost"] (default: "prospecting")
-├── probability: int (0-100, default 0)
-├── expected_close_date: date (optional)
-├── created_at: datetime
-└── updated_at: datetime
-```
-
-### Activity
-```
-Activity
-├── id: UUID (PK)
-├── deal_id: UUID (FK → Deal, ondelete=CASCADE, optional)
-├── customer_id: UUID (FK → Customer, ondelete=CASCADE)
-├── activity_type: enum ["call", "email", "meeting", "note"] (required)
 ├── description: str (required)
-├── scheduled_at: datetime (optional)
-├── completed: bool (default false)
+├── priority: enum ["low", "medium", "high", "emergency"] (default: "medium")
+├── status: enum ["open", "in_progress", "resolved", "closed"] (default: "open")
 ├── created_at: datetime
 └── updated_at: datetime
 ```
@@ -53,70 +61,58 @@ Activity
 ## User Stories / Screens
 
 ### Screen 1: Dashboard
-- Summary cards: total customers, open deals, total pipeline value, win rate
-- Recent activities feed
-- Deals by stage bar chart
-- Quick action buttons (add customer, add deal, log activity)
+- Summary cards: total properties, occupied units, vacant units, open maintenance requests
+- Properties by status chart
+- Recent maintenance requests
 
-### Screen 2: Customers
-- Table view with pagination, search by name/email/company
-- Status filter (lead/active/churned)
-- Bulk delete
-- "Add Customer" modal/form
+### Screen 2: Properties
+- Card grid with property image placeholder, title, price, status badge
+- Property type filter, status filter, price range filter
+- "Add Property" form
 
-### Screen 3: Customer Detail
-- Customer info card with edit/delete
-- Related deals list
-- Related activities timeline
-- Add deal / add activity buttons
+### Screen 3: Property Detail
+- Property info with edit/delete
+- Tenant info if occupied
+- Maintenance history
+- "Add Maintenance Request" button
 
-### Screen 4: Deals
-- Kanban board view by stage (prospecting → closed_won/lost)
-- Table view toggle
-- Search and filter by customer, stage, value
-- "Add Deal" form with customer dropdown
+### Screen 4: Tenants
+- Table view with name, property, lease dates, rent
+- "Add Tenant" form with property dropdown
 
-### Screen 5: Deal Detail
-- Deal info with edit/delete
-- Probability slider
-- Related activities
-- Move stage buttons
-
-### Screen 6: Activities
-- Timeline view of all activities
-- Filter by type, customer, deal
-- Mark complete / incomplete
+### Screen 5: Maintenance Requests
+- Table view with priority color-coding, status filter
+- "Create Request" form
 
 ## AI Features
 
-- **Deal sentiment analysis:** Analyze customer emails/notes for positive/negative sentiment
-- **Next best action:** Recommend next activity based on deal stage and last contact
-- **Win probability prediction:** Use deal attributes to suggest probability score
+- **Price estimation:** Estimate property value based on attributes (mock)
+- **Tenant screening:** Flag high-risk tenants (mock)
 
 ## API Endpoints (v1.0)
 
 ```
-GET    /api/v1/customers          → List customers
-POST   /api/v1/customers          → Create customer
-GET    /api/v1/customers/{id}     → Get customer
-PUT    /api/v1/customers/{id}     → Update customer
-DELETE /api/v1/customers/{id}     → Delete customer
-GET    /api/v1/deals              → List deals
-POST   /api/v1/deals              → Create deal
-GET    /api/v1/deals/{id}         → Get deal
-PUT    /api/v1/deals/{id}         → Update deal
-DELETE /api/v1/deals/{id}         → Delete deal
-GET    /api/v1/activities         → List activities
-POST   /api/v1/activities         → Create activity
-GET    /api/v1/activities/{id}    → Get activity
-PUT    /api/v1/activities/{id}    → Update activity
-DELETE /api/v1/activities/{id}    → Delete activity
+GET    /api/v1/properties         → List properties
+POST   /api/v1/properties         → Create property
+GET    /api/v1/properties/{id}    → Get property
+PUT    /api/v1/properties/{id}    → Update property
+DELETE /api/v1/properties/{id}    → Delete property
+GET    /api/v1/tenants            → List tenants
+POST   /api/v1/tenants            → Create tenant
+GET    /api/v1/tenants/{id}       → Get tenant
+PUT    /api/v1/tenants/{id}       → Update tenant
+DELETE /api/v1/tenants/{id}       → Delete tenant
+GET    /api/v1/maintenance        → List maintenance requests
+POST   /api/v1/maintenance        → Create maintenance request
+GET    /api/v1/maintenance/{id}   → Get maintenance request
+PUT    /api/v1/maintenance/{id}   → Update maintenance request
+DELETE /api/v1/maintenance/{id}   → Delete maintenance request
 GET    /api/v1/dashboard          → Dashboard stats
 ```
 
 ## Non-Functional Requirements
 
 - Backend tests: 70%+ coverage
-- Frontend: Responsive, Tailwind + shadcn/ui
+- Frontend: Responsive, Tailwind + pre-built UI components
 - Docker: All services start with `docker compose up -d`
 - No mock data — everything persisted to PostgreSQL
